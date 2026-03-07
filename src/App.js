@@ -1,6 +1,8 @@
+// App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext'; // <-- Add this
 
 import Navigation from './components/layout/Navigation';
 import Footer from './components/layout/Footer';
@@ -11,27 +13,58 @@ import LangwageLogin from './pages/LoginPage';
 import BlogPage from './pages/BlogPage';
 import LangwageRegistration from './pages/RegistrationPage';
 import LangwageDashboard from './Dashboard/Dashboard';
+import EmailVerified from './components/sections/EmailVerified';
 
+// Private Route Component
+const PrivateRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
+  }
+
+  return user?.isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 const AppContent = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
-  // Define paths where Navigation should be hidden
-  const hideNavOnRoutes = ['/login', '/reg', '/dash'];
+  const hideNavAndFooterOnRoutes = ['/login', '/reg', 'dash', '/email-verified'];
 
-  const shouldShowNavigation = !hideNavOnRoutes.includes(location.pathname);
+  const shouldShowNavigation = !hideNavAndFooterOnRoutes.includes(location.pathname);
+  const shouldShowFooter = !hideNavAndFooterOnRoutes.includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {shouldShowNavigation && <Navigation />}
+      
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/login" element={<LangwageLogin />} />
           <Route path="/blog" element={<BlogPage />} />
-          <Route path="/reg" element={<LangwageRegistration />} />
-          <Route path="/dash" element={<LangwageDashboard />} />
+
+          {/* Public Routes */}
+          <Route path="/login" element={<LangwageLogin />} />
+          <Route path="/reg" element={<LangwageDashboard />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
+
+          {/* Protected Route - Only logged in users */}
+          <Route
+            path="/dash"
+            element={
+              <PrivateRoute>
+                <LangwageDashboard />
+              </PrivateRoute>
+            }
+          />
+
+          {/* 404 */}
           <Route
             path="*"
             element={
@@ -45,7 +78,8 @@ const AppContent = () => {
           />
         </Routes>
       </main>
-      <Footer />
+
+      {shouldShowFooter && <Footer />}
     </div>
   );
 };
@@ -54,7 +88,9 @@ const App = () => {
   return (
     <Router>
       <ThemeProvider>
-        <AppContent />
+        <AuthProvider> 
+          <AppContent />
+        </AuthProvider>
       </ThemeProvider>
     </Router>
   );
