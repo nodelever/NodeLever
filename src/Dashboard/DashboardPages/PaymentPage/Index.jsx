@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PaymentsTab } from './PaymentsTab';
 import { PaymentMethodTab } from './PaymentMethodTab';
 import { TaxComplianceTab } from './TaxComplianceTab';
 
 export const PaymentPage = () => {
-  const [activeTab, setActiveTab] = useState('payments');
+  // Initialize state by checking localStorage first
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem('targetPaymentTab');
+    if (savedTab) {
+      // Clean it up immediately so it only triggers this one time
+      localStorage.removeItem('targetPaymentTab');
+      return savedTab;
+    }
+    return 'payments'; // Default fallback
+  });
 
   const renderTabContent = () => {
     switch (activeTab) {

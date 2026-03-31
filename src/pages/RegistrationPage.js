@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Globe, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { ArrowRight, Globe, Eye, EyeOff, ArrowLeft, Loader2, AlertCircle, Home } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom'; // Added Link and useNavigate
 
 export default function LangwageRegistration() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -15,6 +17,10 @@ export default function LangwageRegistration() {
   const [rememberMe, setRememberMe] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
+  
+  // New States for Loading and Custom Errors
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
@@ -48,7 +54,7 @@ export default function LangwageRegistration() {
       if (formData.firstName && formData.lastName && formData.email) {
         setCurrentStep(2);
       } else {
-        alert('Please fill in all fields');
+        setErrorMsg('Please fill in all fields before continuing.');
       }
     }
   };
@@ -61,14 +67,17 @@ export default function LangwageRegistration() {
 
   const handleSubmit = async () => {
     if (!formData.password || !formData.confirmPassword) {
-      alert('Please enter and confirm your password');
+      setErrorMsg('Please enter and confirm your password.');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setErrorMsg('Passwords do not match. Please try again.');
       return;
     }
+
+    setIsLoading(true);
+    setErrorMsg('');
 
     try {
       const response = await fetch('http://localhost:5000/reg', {
@@ -85,10 +94,9 @@ export default function LangwageRegistration() {
       });
 
       const data = await response.json();
-      console.log('Registration response:', data);
       
       if (response.ok) {
-        alert('Registration successful!');
+        // Clear form and route to login on success
         setFormData({
           firstName: '',
           lastName: '',
@@ -96,19 +104,54 @@ export default function LangwageRegistration() {
           password: '',
           confirmPassword: ''
         });
-        setRememberMe(false);
         setCurrentStep(1);
+        // Optional: You could trigger a success modal here instead, 
+        // but routing them straight to login is usually best.
+        navigate('/login'); 
       } else {
-        alert('Registration failed: ' + (data.message || 'Unknown error'));
+        setErrorMsg(data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      setErrorMsg('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center py-12">
+
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 sm:top-8 sm:left-8 z-50 flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-gray-400 hover:text-white transition-all duration-300 backdrop-blur-md group"
+      >
+        <Home className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+        <span className="text-sm font-medium">Home</span>
+      </Link>
+      
+      {/* --- ERROR MODAL --- */}
+      {errorMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1528] w-full max-w-sm rounded-2xl border border-red-500/30 p-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-red-500/20 blur-[40px] rounded-full" />
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
+                <AlertCircle className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Notice</h3>
+              <p className="text-gray-400 text-sm mb-6">{errorMsg}</p>
+              <button
+                onClick={() => setErrorMsg('')}
+                className="w-full bg-white/10 hover:bg-white/20 text-white py-2.5 rounded-lg transition-colors border border-white/10 font-medium"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
@@ -280,15 +323,15 @@ export default function LangwageRegistration() {
                       id="rememberMe"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-600 bg-white/10 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                      className="w-4 h-4 rounded border-gray-600 bg-white/10 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
                     />
-                    <label htmlFor="rememberMe" className="text-sm text-gray-300">
+                    <label htmlFor="rememberMe" className="text-sm text-gray-300 cursor-pointer">
                       Remember me
                     </label>
                   </div>
-                  <a href="#" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+                  <Link to="/forgot-password" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
 
                 {/* Navigation Buttons */}
@@ -296,17 +339,31 @@ export default function LangwageRegistration() {
                   <button
                     type="button"
                     onClick={handlePrevStep}
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-gray-300 border border-white/20 hover:border-purple-400 hover:text-white transition-all duration-300"
+                    disabled={isLoading}
+                    className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-gray-300 border border-white/20 transition-all duration-300 ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:border-purple-400 hover:text-white'
+                    }`}
                   >
                     <ArrowLeft className="w-5 h-5" /> Back
                   </button>
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="group flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-3 rounded-lg text-white font-semibold hover:scale-105 transform transition-all duration-300 shadow-2xl hover:shadow-purple-500/50 relative overflow-hidden"
+                    disabled={isLoading}
+                    className={`group flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-3 rounded-lg text-white font-semibold transform transition-all duration-300 shadow-2xl relative overflow-hidden ${
+                      isLoading ? 'opacity-80 cursor-not-allowed' : 'hover:scale-105 hover:shadow-purple-500/50'
+                    }`}
                   >
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      Sign Up <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" /> Processing...
+                        </>
+                      ) : (
+                        <>
+                          Sign Up <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </button>
@@ -319,9 +376,9 @@ export default function LangwageRegistration() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
               Already have an account?{' '}
-              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+              <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
                 Sign in
-              </a>
+              </Link>
             </p>
           </div>
 
@@ -329,13 +386,13 @@ export default function LangwageRegistration() {
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-500">
               By signing up, you agree to our{' '}
-              <a href="#" className="text-purple-400 hover:text-purple-300 transition-colors">
+              <Link to="/terms" className="text-purple-400 hover:text-purple-300 transition-colors">
                 Terms of Service
-              </a>
+              </Link>
               {' '}and{' '}
-              <a href="#" className="text-purple-400 hover:text-purple-300 transition-colors">
+              <Link to="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors">
                 Privacy Policy
-              </a>
+              </Link>
             </p>
           </div>
         </div>

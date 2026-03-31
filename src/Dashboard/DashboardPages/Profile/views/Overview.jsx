@@ -2,6 +2,8 @@ import React from 'react';
 import { UserCircle, Shield, CheckCircle2, Loader2 } from 'lucide-react';
 import { useProfileStore } from '../store/useProfileStore';
 import { LegalAgreementModal } from '../components/LegalAgreementModal';
+import { TaxPromptModal } from '../../../../components/TaxPromptModal';
+
 
 export const Overview = () => {
   const userStatus = useProfileStore((state) => state.userStatus);
@@ -10,7 +12,7 @@ export const Overview = () => {
   const setShowLegalModal = useProfileStore((state) => state.setShowLegalModal);
   
 const showLegalModal = useProfileStore((state) => state.showLegalModal);
-
+const showTaxModal = useProfileStore((state) => state.showTaxModal); 
   if (loading && !userStatus.profileComplete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -20,7 +22,8 @@ const showLegalModal = useProfileStore((state) => state.showLegalModal);
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-6 relative">
+      {showTaxModal && <TaxPromptModal />}
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-8">Profile Overview</h1>
         

@@ -11,7 +11,7 @@ const Navigation = () => {
     { path: '/', label: 'Home' },
     { path: '/blog', label: 'Solutions' },
     { path: '/about', label: 'About' },
-
+    { path: '/login', label: 'Sign In' },
   ];
 
   useEffect(() => {
@@ -66,11 +66,14 @@ const Navigation = () => {
               </Link>
             ))}
             
-            {/* Signup Button */}
-            {/* <button className="bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-2 rounded-full text-white font-semibold hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25 transform transition-all duration-300 relative overflow-hidden group">
-              <span className="relative z-10">Signup</span>
+            {/* Desktop Signup Button (Changed to Link) */}
+            <Link 
+              to="/reg" 
+              className="bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-2 rounded-full text-white font-semibold hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25 transform transition-all duration-300 relative overflow-hidden group flex items-center justify-center"
+            >
+              <span className="relative z-10">Sign Up</span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </button> */}
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -107,11 +110,15 @@ const Navigation = () => {
               </Link>
             ))}
             
-            {/* Mobile Signup Button */}
+            {/* Mobile Signup Button (Uncommented and changed to Link) */}
             <div className="pt-4 border-t border-purple-500/20">
-              {/* <button className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-3 rounded-lg text-white font-semibold hover:scale-[1.02] transform transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25">
-                Signup
-              </button> */}
+              <Link 
+                to="/reg" 
+                onClick={() => setIsOpen(false)}
+                className="w-full flex justify-center bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-3 rounded-lg text-white font-semibold hover:scale-[1.02] transform transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+              >
+                Sign Up
+              </Link>
             </div>
           </div>
         </div>

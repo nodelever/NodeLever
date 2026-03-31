@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext'; // <-- Add this
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 import Navigation from './components/layout/Navigation';
 import Footer from './components/layout/Footer';
@@ -14,6 +14,10 @@ import BlogPage from './pages/BlogPage';
 import LangwageRegistration from './pages/RegistrationPage';
 import LangwageDashboard from './Dashboard/Dashboard';
 import EmailVerified from './components/sections/EmailVerified';
+
+// 1. Import the new legal pages
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -34,7 +38,7 @@ const AppContent = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  const hideNavAndFooterOnRoutes = ['/login', '/reg', 'dash', '/email-verified'];
+  const hideNavAndFooterOnRoutes = ['/login', '/reg', '/dash', '/email-verified'];
 
   const shouldShowNavigation = !hideNavAndFooterOnRoutes.includes(location.pathname);
   const shouldShowFooter = !hideNavAndFooterOnRoutes.includes(location.pathname);
@@ -43,20 +47,24 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {shouldShowNavigation && <Navigation />}
       
-      <main className="flex-grow">
+      <main className="flex-grow bg-black"> {/* Added bg-black here to prevent white flashes */}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/blog" element={<BlogPage />} />
 
+          {/* 2. Add the Legal Routes */}
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+
           {/* Public Routes */}
           <Route path="/login" element={<LangwageLogin />} />
-          <Route path="/reg" element={<LangwageDashboard />} />
+          <Route path="/reg" element={<LangwageRegistration />} />
           <Route path="/email-verified" element={<EmailVerified />} />
 
           {/* Protected Route - Only logged in users */}
           <Route
-            path="/dash"
+            path="/dash/*"
             element={
               <PrivateRoute>
                 <LangwageDashboard />
@@ -68,10 +76,10 @@ const AppContent = () => {
           <Route
             path="*"
             element={
-              <div className="min-h-screen flex items-center justify-center">
+              <div className="min-h-screen flex items-center justify-center bg-black">
                 <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
-                  <p className="text-gray-600">The page you're looking for doesn't exist.</p>
+                  <h1 className="text-4xl font-bold mb-4 text-white">404 - Page Not Found</h1>
+                  <p className="text-gray-400">The page you're looking for doesn't exist.</p>
                 </div>
               </div>
             }

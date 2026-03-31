@@ -6,6 +6,7 @@ export const useProfileStore = create((set, get) => ({
   currentStep: 1,
   showLegalModal: false,
   loading: false,
+  showTaxModal: false,
   errors: {},
   userStatus: {
     profileComplete: false,
@@ -28,6 +29,7 @@ export const useProfileStore = create((set, get) => ({
   // --- ACTIONS ---
   setView: (view) => set({ view }),
   setShowLegalModal: (showLegalModal) => set({ showLegalModal }),
+  setShowTaxModal: (showTaxModal) => set({ showTaxModal }), 
 
   handleInputChange: (field, value) => {
     set((state) => {
@@ -103,11 +105,20 @@ export const useProfileStore = create((set, get) => ({
   },
 
   // --- ASYNC API SIMULATIONS ---
-  fetchUserStatus: async () => {
+fetchUserStatus: async () => {
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      set({ userStatus: { profileComplete: false, dataReviewed: true, legalAgreed: false } });
+      const token = localStorage.getItem('token'); 
+      const response = await fetch('http://localhost:5000/api/profile/status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch status');
+      
+      const data = await response.json();
+      set({ userStatus: data.userStatus });
     } catch (error) {
       console.error('Error fetching user status:', error);
     } finally {
@@ -115,30 +126,75 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  handleSubmit: async () => {
-    const { validateStep } = get();
+handleSubmit: async () => {
+    const { validateStep, formData } = get();
     if (!validateStep(3)) return;
 
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 1. Get the auth token
+      const token = localStorage.getItem('token'); 
+      if (!token) throw new Error('Not authenticated');
+
+      // 2. Create FormData object for the file and text data
+      const dataToSend = new FormData();
+      Object.keys(formData).forEach(key => {
+        // Only append if the value exists
+        if (formData[key] !== null && formData[key] !== undefined) {
+          dataToSend.append(key, formData[key]);
+        }
+      });
+
+      // 3. Send the request with the Auth header
+      const response = await fetch('http://localhost:5000/api/profile/submit', {
+        method: 'POST',
+        headers: {
+          // Do NOT set 'Content-Type': 'multipart/form-data'. The browser does this automatically!
+          'Authorization': `Bearer ${token}` 
+        },
+        body: dataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Submission failed');
+      }
+
+      const data = await response.json();
+
+      // 4. Update the frontend state on success
       set((state) => ({
-        userStatus: { ...state.userStatus, profileComplete: true },
+        // Use the updated status from the backend
+        userStatus: data.userStatus, 
         view: 'overview',
-        currentStep: 1
+        currentStep: 1,
+        showTaxModal: true,
+        formData: { ...state.formData, cvFile: null } // Clear file from memory
       }));
+
     } catch (error) {
       console.error('Error submitting profile:', error);
-      set({ errors: { submit: 'Failed to submit profile. Please try again.' } });
+      set({ errors: { submit: error.message || 'Failed to submit profile. Please try again.' } });
     } finally {
       set({ loading: false });
     }
   },
 
-  handleLegalAgree: async () => {
+ handleLegalAgree: async () => {
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/profile/legal-agree', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to accept agreement');
+
+      // Update local state to reflect the successful database update
       set((state) => ({
         userStatus: { ...state.userStatus, legalAgreed: true },
         showLegalModal: false
