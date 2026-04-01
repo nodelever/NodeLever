@@ -80,7 +80,7 @@ export default function LangwageRegistration() {
     setErrorMsg('');
 
     try {
-      const response = await fetch('http://localhost:5000/reg', {
+      const response = await fetch('https://the-king-backend.onrender.com/reg', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

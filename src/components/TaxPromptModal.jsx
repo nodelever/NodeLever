@@ -1,20 +1,29 @@
 import React from 'react';
 import { FileText, X, ArrowRight } from 'lucide-react';
 import { useProfileStore } from '../Dashboard/DashboardPages/Profile/store/useProfileStore';
-import { useRouter } from '../utils/useRouter'; // <-- Import your custom router
+import { useRouter } from '../utils/useRouter';
 
 export const TaxPromptModal = () => {
   const setShowTaxModal = useProfileStore((state) => state.setShowTaxModal);
-  const { navigate } = useRouter(); // <-- Use your custom navigate function
+  const { navigate } = useRouter(); 
 
   const handleGoToTax = () => {
-    setShowTaxModal(false);
-    
-    // 1. Leave a temporary note for the PaymentPage
+    // 1. Leave the temporary note for the PaymentPage FIRST
     localStorage.setItem('targetPaymentTab', 'tax-compliance');
     
-    // 2. Tell your Dashboard to switch to the payment view
-    navigate('/payment'); 
+    // 2. Trigger the navigation BEFORE closing the modal.
+    // We try window.navigate first since Dashboard.jsx bound the master router to it!
+    if (window.navigate) {
+      window.navigate('/payment'); 
+    } else {
+      navigate('/payment');
+    }
+
+    // 3. Close the modal on a tiny delay so the routing has time to trigger 
+    // before this component is destroyed from the DOM.
+    setTimeout(() => {
+      setShowTaxModal(false);
+    }, 50);
   };
 
   return (
@@ -38,7 +47,7 @@ export const TaxPromptModal = () => {
 
           <h2 className="text-2xl font-bold text-white mb-2">Profile Completed!</h2>
           <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-            Awesome! Your profile is set up. To ensure you can receive payments seamlessly, please complete your W-9 Tax Compliance form now.
+            Awesome! Your profile is completed, awaiting verification, to ensure quick Authentication and Approval, please complete your W-9 Tax Compliance form now.
           </p>
 
           <div className="w-full space-y-3">

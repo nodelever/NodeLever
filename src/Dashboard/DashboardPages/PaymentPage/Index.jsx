@@ -4,16 +4,19 @@ import { PaymentMethodTab } from './PaymentMethodTab';
 import { TaxComplianceTab } from './TaxComplianceTab';
 
 export const PaymentPage = () => {
-  // Initialize state by checking localStorage first
-  const [activeTab, setActiveTab] = useState(() => {
+  // 1. Keep the initial state simple
+  const [activeTab, setActiveTab] = useState('payments');
+
+  // 2. Safely check for the redirect note AFTER the page loads
+  useEffect(() => {
     const savedTab = localStorage.getItem('targetPaymentTab');
+    
     if (savedTab) {
-      // Clean it up immediately so it only triggers this one time
+      setActiveTab(savedTab);
+      // Clean it up safely here
       localStorage.removeItem('targetPaymentTab');
-      return savedTab;
     }
-    return 'payments'; // Default fallback
-  });
+  }, []);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -51,7 +54,11 @@ export const PaymentPage = () => {
           ))}
         </nav>
       </div>
-      {renderTabContent()}
+      
+      {/* Renders the selected tab component */}
+      <div className="transition-all duration-300">
+        {renderTabContent()}
+      </div>
     </div>
   );
 };

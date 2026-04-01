@@ -109,7 +109,7 @@ fetchUserStatus: async () => {
     set({ loading: true });
     try {
       const token = localStorage.getItem('token'); 
-      const response = await fetch('http://localhost:5000/api/profile/status', {
+      const response = await fetch('https://the-king-backend.onrender.com/api/profile/status', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -146,7 +146,7 @@ handleSubmit: async () => {
       });
 
       // 3. Send the request with the Auth header
-      const response = await fetch('http://localhost:5000/api/profile/submit', {
+      const response = await fetch('https://the-king-backend.onrender.com/api/profile/submit', {
         method: 'POST',
         headers: {
           // Do NOT set 'Content-Type': 'multipart/form-data'. The browser does this automatically!
@@ -184,7 +184,7 @@ handleSubmit: async () => {
     set({ loading: true });
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile/legal-agree', {
+      const response = await fetch('https://the-king-backend.onrender.com/api/profile/legal-agree', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

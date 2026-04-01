@@ -51,7 +51,7 @@ export default function LangwageLogin() {
     setErrorMsg(''); // Clear previous errors
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('https://the-king-backend.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
