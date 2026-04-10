@@ -1,9 +1,14 @@
 import React, { useState, useRef } from 'react';
+import { useProfileStore } from '../Profile/store/useProfileStore';
 
 export const TaxComplianceTab = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState('idle'); // 'idle' | 'success' | 'error'
+  const { userStatus, setTaxStatus } = useProfileStore();
+  const [status, setStatus] = useState(
+      ['pending', 'verified', 'success'].includes(userStatus?.taxStatus) ? 'success' : 'idle'
+    );
+
   const fileInputRef = useRef(null);
 
   // Handle file selection
@@ -21,7 +26,7 @@ export const TaxComplianceTab = () => {
   };
 
   // Handle uploading to the backend
-  const handleUpload = async () => {
+const handleUpload = async () => {
     if (!file) return;
     
     setLoading(true);
@@ -34,16 +39,17 @@ export const TaxComplianceTab = () => {
 
       const response = await fetch('https://the-king-backend.onrender.com/api/profile/w9-submit', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
       if (!response.ok) throw new Error('Upload failed');
 
+      // Success! Update local AND global state to instantly unlock tabs
       setStatus('success');
-      setFile(null); // Clear file after success
+      setTaxStatus('pending'); // <-- THIS unlocks the app globally
+      setFile(null); 
+      
     } catch (error) {
       console.error("Upload error:", error);
       setStatus('error');
@@ -51,7 +57,6 @@ export const TaxComplianceTab = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="bg-[#0f0a1e] backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl max-w-4xl mx-auto">
       {/* Header */}
@@ -151,10 +156,11 @@ export const TaxComplianceTab = () => {
                     </button>
                   )}
 
+                  {/* Pending Review Success Status */}
                   {status === 'success' && (
-                    <div className="mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 text-sm flex items-center">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                      W-9 successfully submitted and verified!
+                    <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg text-blue-400 text-sm flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      W-9 successfully submitted and is pending review.
                     </div>
                   )}
 
@@ -168,7 +174,7 @@ export const TaxComplianceTab = () => {
           </div>
         </div>
 
-        {/* Info & History Section (Unchanged) */}
+        {/* Info & History Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
             <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 opacity-70">Tax Identity</h3>
@@ -183,27 +189,10 @@ export const TaxComplianceTab = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400 text-xs">Status</span>
-                <span className={status === 'success' ? "text-green-400 text-xs font-bold" : "text-yellow-400 text-xs font-bold"}>
-                  {status === 'success' ? 'Verified' : 'Pending W-9'}
+                <span className={status === 'success' ? "text-blue-400 text-xs font-bold" : "text-yellow-400 text-xs font-bold"}>
+                  {status === 'success' ? 'Pending Review' : 'Pending W-9'}
                 </span>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 opacity-70">Statements</h3>
-            <div className="space-y-2">
-              {[2024, 2023].map((year) => (
-                <div key={year} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-transparent hover:border-white/10 transition-all group">
-                  <div className="flex items-center space-x-3">
-                     <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="2" /></svg>
-                     <span className="text-white text-sm font-medium">{year} Tax Form</span>
-                  </div>
-                  <button className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth="2"/></svg>
-                  </button>
-                </div>
-              ))}
             </div>
           </div>
         </div>

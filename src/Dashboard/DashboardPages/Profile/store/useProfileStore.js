@@ -12,10 +12,13 @@ export const useProfileStore = create((set, get) => ({
     profileComplete: false,
     dataReviewed: true,
     legalAgreed: false,
-    identityVerified: false
+    identityVerified: false,
+    taxStatus: 'idle' // Add this: 'idle' | 'pending' | 'verified'
+
   },
   formData: {
     email: '',
+    countryCode: '+1', // <-- Added default country code here
     phoneNumber: '',
     dateOfBirth: '',
     address: '',
@@ -105,7 +108,7 @@ export const useProfileStore = create((set, get) => ({
   },
 
   // --- ASYNC API SIMULATIONS ---
-fetchUserStatus: async () => {
+  fetchUserStatus: async () => {
     set({ loading: true });
     try {
       const token = localStorage.getItem('token'); 
@@ -127,23 +130,38 @@ fetchUserStatus: async () => {
   },
 
 handleSubmit: async () => {
-    const { validateStep, formData } = get();
-    if (!validateStep(3)) return;
+  const { validateStep, formData } = get();
+  if (!validateStep(3)) return;
 
-    set({ loading: true });
-    try {
-      // 1. Get the auth token
-      const token = localStorage.getItem('token'); 
-      if (!token) throw new Error('Not authenticated');
+  set({ loading: true });
+  try {
+    const token = localStorage.getItem('token'); 
+    if (!token) throw new Error('Not authenticated');
 
-      // 2. Create FormData object for the file and text data
-      const dataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        // Only append if the value exists
-        if (formData[key] !== null && formData[key] !== undefined) {
+    const dataToSend = new FormData();
+
+    // Loop through keys but handle phone number specially
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        
+        if (key === 'phoneNumber') {
+          // COMBINE: countryCode + phoneNumber into the 'phoneNumber' field
+          const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
+          dataToSend.append('phoneNumber', fullPhone);
+        } 
+        else if (key === 'countryCode') {
+          // SKIP: We don't need to send countryCode as a separate field
+          return; 
+        } 
+        else {
+          // APPEND everything else normally
           dataToSend.append(key, formData[key]);
         }
-      });
+
+      }
+    });
+
+    // ... rest of your fetch call remains the same
 
       // 3. Send the request with the Auth header
       const response = await fetch('https://the-king-backend.onrender.com/api/profile/submit', {
@@ -180,7 +198,7 @@ handleSubmit: async () => {
     }
   },
 
- handleLegalAgree: async () => {
+  handleLegalAgree: async () => {
     set({ loading: true });
     try {
       const token = localStorage.getItem('token');
@@ -204,5 +222,10 @@ handleSubmit: async () => {
     } finally {
       set({ loading: false });
     }
-  }
+  },
+  
+  setTaxStatus: (status) => set((state) => ({ 
+    userStatus: { ...state.userStatus, taxStatus: status } 
+  })),
+
 }));

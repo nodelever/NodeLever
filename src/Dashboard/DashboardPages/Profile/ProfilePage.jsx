@@ -4,14 +4,21 @@ import { Overview } from './views/Overview';
 import { Step1AccountInfo } from './views/Step1AccountInfo';
 import { Step2Address } from './views/Step2Address';
 import { Step3UploadCV } from './views/Step3UploadCV';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export function ProfilePage() {
+  const { user } = useAuth();
+  const handleInputChange = useProfileStore((state) => state.handleInputChange);
   const view = useProfileStore((state) => state.view);
   const fetchUserStatus = useProfileStore((state) => state.fetchUserStatus);
 
-  useEffect(() => {
+useEffect(() => {
     fetchUserStatus();
-  }, [fetchUserStatus]);
+    // Sync the authenticated email to the store automatically
+    if (user?.email) {
+      handleInputChange('email', user.email);
+    }
+  }, [fetchUserStatus, user, handleInputChange]);
 
   return (
     <>
