@@ -1,9 +1,119 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Globe, Eye, EyeOff, ArrowLeft, Loader2, AlertCircle, Home } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom'; // Added Link and useNavigate
+import { Link, useNavigate } from 'react-router-dom';
+
+const regStyles = `
+  /* Shared Keyframes */
+  @keyframes glow-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes float-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  
+  /* Container & Backgrounds */
+  .nl-reg-wrapper {
+    background: #0b0d14;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: sans-serif;
+    overflow: hidden;
+    padding: 20px;
+  }
+  .nl-grid-bg { position:absolute;inset:0; background-image:linear-gradient(rgba(120,80,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,80,255,.07) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; z-index: 1; }
+  
+  .nl-glow-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; z-index: 0; pointer-events: none; transition: transform 0.2s ease-out; }
+  .nl-glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(124,58,237, 0.4); max-width: 600px; max-height: 600px; }
+  .nl-glow-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: rgba(14,165,233, 0.3); max-width: 500px; max-height: 500px; }
+
+  /* Top Navigation */
+  .nl-back-nav { position: absolute; top: 32px; left: 32px; z-index: 10; background: rgba(255,255,255,.03); border: 0.5px solid rgba(255,255,255,.08); border-radius: 24px; padding: 10px 20px; color: rgba(255,255,255,.6); font-size: 13px; font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all .2s; backdrop-filter: blur(8px); }
+  .nl-back-nav:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateY(-1px); border-color: rgba(255,255,255,.15); }
+
+  /* Main Form Card */
+  .nl-reg-card {
+    background: rgba(255,255,255,.03);
+    border: 0.5px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 5;
+    backdrop-filter: blur(16px);
+    animation: glow-in .6s ease both;
+    box-shadow: 0 24px 48px rgba(0,0,0,.4);
+  }
+  
+  /* Headers */
+  .nl-reg-header { text-align: center; margin-bottom: 32px; }
+  .nl-reg-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: rgba(124,58,237,.12); border: 0.5px solid rgba(167,139,250,.3); margin-bottom: 20px; color: #a78bfa; }
+  .nl-reg-title { font-size: 32px; font-weight: 500; color: #fff; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .nl-reg-title em { font-style: normal; background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nl-reg-sub { font-size: 15px; color: rgba(255,255,255,.5); }
+
+  /* Progress Bar */
+  .nl-step-container { display: flex; gap: 8px; margin-bottom: 36px; }
+  .nl-step-bar { height: 4px; flex: 1; background: rgba(255,255,255,.05); border-radius: 2px; transition: background .3s ease; }
+  .nl-step-bar.active { background: linear-gradient(135deg, #7c3aed, #0ea5e9); box-shadow: 0 0 8px rgba(124,58,237,.4); }
+
+  /* Form Elements */
+  .nl-form-group { margin-bottom: 18px; text-align: left; }
+  .nl-label { display: block; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 8px; font-weight: 500; }
+  .nl-input-wrapper { position: relative; display: flex; align-items: center; }
+  .nl-input { width: 100%; background: rgba(0,0,0,.3); border: 0.5px solid rgba(255,255,255,.12); border-radius: 12px; padding: 14px 16px; color: #fff; font-size: 14px; outline: none; transition: all .2s; box-sizing: border-box; }
+  .nl-input:focus { border-color: #a78bfa; background: rgba(0,0,0,.5); box-shadow: 0 0 0 1px rgba(167,139,250,.2); }
+  .nl-input::placeholder { color: rgba(255,255,255,.25); }
+  .nl-input-icon-btn { position: absolute; right: 12px; background: none; border: none; color: rgba(255,255,255,.4); cursor: pointer; padding: 4px; display: flex; align-items: center; transition: color .2s; }
+  .nl-input-icon-btn:hover { color: #fff; }
+
+  /* Checkbox & Small Links */
+  .nl-checkbox-wrapper { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; }
+  .nl-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,.6); cursor: pointer; }
+  .nl-checkbox { appearance: none; width: 16px; height: 16px; border: 1px solid rgba(255,255,255,.2); border-radius: 4px; background: rgba(0,0,0,.3); cursor: pointer; position: relative; transition: all .2s; }
+  .nl-checkbox:checked { background: #7c3aed; border-color: #7c3aed; }
+  .nl-checkbox:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  
+  .nl-link { color: #a78bfa; text-decoration: none; transition: color .2s; font-weight: 500; cursor: pointer; }
+  .nl-link:hover { color: #c4b5fd; }
+
+  /* Buttons */
+  .nl-btn-primary { background: linear-gradient(135deg, #7c3aed, #0ea5e9); border: none; border-radius: 24px; padding: 14px 28px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity .2s, transform .15s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 28px; }
+  .nl-btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+  .nl-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  
+  .nl-btn-secondary { background: rgba(255,255,255,.05); border: 0.5px solid rgba(255,255,255,.15); border-radius: 24px; padding: 14px 24px; color: rgba(255,255,255,.7); font-size: 14px; font-weight: 400; cursor: pointer; transition: background .2s, color .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .nl-btn-secondary:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .nl-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .nl-form-row { display: flex; gap: 12px; margin-top: 28px; }
+  .nl-form-row .nl-btn-primary { margin-top: 0; flex: 1; }
+
+  /* Footers */
+  .nl-footer-text { margin-top: 28px; text-align: center; font-size: 13px; color: rgba(255,255,255,.4); }
+  .nl-footer-text .nl-link { font-weight: 400; }
+  .nl-terms-text { margin-top: 16px; text-align: center; font-size: 12px; color: rgba(255,255,255,.3); }
+
+  /* Error Modal */
+  .nl-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .nl-modal { background: #0b0d14; border: 1px solid rgba(239,68,68,.3); border-radius: 20px; padding: 32px; width: 100%; max-width: 360px; text-align: center; position: relative; overflow: hidden; animation: glow-in .3s ease both; box-shadow: 0 20px 40px rgba(0,0,0,.6); }
+  .nl-modal-glow { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 120px; height: 120px; background: rgba(239,68,68,.2); filter: blur(40px); border-radius: 50%; pointer-events: none; }
+  .nl-modal-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #ef4444; position: relative; z-index: 1; }
+  .nl-modal-title { font-size: 18px; font-weight: 500; color: #fff; margin-bottom: 8px; position: relative; z-index: 1; }
+  .nl-modal-text { font-size: 14px; color: rgba(255,255,255,.5); margin-bottom: 24px; position: relative; z-index: 1; line-height: 1.5; }
+  .nl-modal-btn { background: rgba(255,255,255,.05); border: 0.5px solid rgba(255,255,255,.15); border-radius: 24px; padding: 12px 24px; color: #fff; font-size: 14px; cursor: pointer; transition: all .2s; width: 100%; position: relative; z-index: 1; }
+  .nl-modal-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
+
+  /* Transitions for steps */
+  .nl-step-view { transition: transform 0.4s ease, opacity 0.4s ease; width: 100%; }
+  .nl-step-view.hidden-left { position: absolute; transform: translateX(-20px); opacity: 0; pointer-events: none; }
+  .nl-step-view.hidden-right { position: absolute; transform: translateX(20px); opacity: 0; pointer-events: none; }
+  .nl-step-view.active { position: relative; transform: translateX(0); opacity: 1; }
+`;
 
 export default function LangwageRegistration() {
   const navigate = useNavigate();
+  const [injected, setInjected] = useState(false);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -15,35 +125,31 @@ export default function LangwageRegistration() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(false);
   
-  // New States for Loading and Custom Errors
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Inject styles matching the Hero page pattern
   useEffect(() => {
-    setIsVisible(true);
+    if (!injected) {
+      const tag = document.createElement('style');
+      tag.textContent = regStyles;
+      document.head.appendChild(tag);
+      setInjected(true);
+    }
+  }, [injected]);
+
+  useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+      setMousePosition({ 
+        x: (e.clientX / window.innerWidth - 0.5) * 40, 
+        y: (e.clientY / window.innerHeight - 0.5) * 40 
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
-
-  const FloatingOrb = ({ delay, size, color }) => (
-    <div 
-      className="absolute rounded-full blur-xl opacity-30 animate-pulse"
-      style={{
-        width: size,
-        height: size,
-        background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-        animationDelay: `${delay}s`,
-        animationDuration: '4s',
-        transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
-      }}
-    />
-  );
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -96,17 +202,8 @@ export default function LangwageRegistration() {
       const data = await response.json();
       
       if (response.ok) {
-        // Clear form and route to login on success
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          password: '',
-          confirmPassword: ''
-        });
+        setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
         setCurrentStep(1);
-        // Optional: You could trigger a success modal here instead, 
-        // but routing them straight to login is usually best.
         navigate('/login'); 
       } else {
         setErrorMsg(data.message || 'Registration failed. Please try again.');
@@ -120,281 +217,187 @@ export default function LangwageRegistration() {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center py-12">
+    <div className="nl-reg-wrapper">
+      <div className="nl-grid-bg" />
+      
+      {/* Background Ambient Orbs linked to mouse */}
+      <div 
+        className="nl-glow-orb nl-glow-1" 
+        style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)` }} 
+      />
+      <div 
+        className="nl-glow-orb nl-glow-2" 
+        style={{ transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)` }} 
+      />
 
-      <Link 
-        to="/" 
-        className="absolute top-6 left-6 sm:top-8 sm:left-8 z-50 flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-gray-400 hover:text-white transition-all duration-300 backdrop-blur-md group"
-      >
-        <Home className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
-        <span className="text-sm font-medium">Home</span>
+      {/* Floating Home Nav */}
+      <Link to="/" className="nl-back-nav">
+        <Home size={16} /> Home
       </Link>
       
-      {/* --- ERROR MODAL --- */}
+      {/* Error Modal */}
       {errorMsg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1528] w-full max-w-sm rounded-2xl border border-red-500/30 p-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-red-500/20 blur-[40px] rounded-full" />
-            <div className="flex flex-col items-center text-center relative z-10">
-              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
-                <AlertCircle className="w-6 h-6 text-red-400" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Notice</h3>
-              <p className="text-gray-400 text-sm mb-6">{errorMsg}</p>
-              <button
-                onClick={() => setErrorMsg('')}
-                className="w-full bg-white/10 hover:bg-white/20 text-white py-2.5 rounded-lg transition-colors border border-white/10 font-medium"
-              >
-                Got it
-              </button>
+        <div className="nl-modal-overlay">
+          <div className="nl-modal">
+            <div className="nl-modal-glow" />
+            <div className="nl-modal-icon">
+              <AlertCircle size={24} />
             </div>
+            <h3 className="nl-modal-title">Notice</h3>
+            <p className="nl-modal-text">{errorMsg}</p>
+            <button onClick={() => setErrorMsg('')} className="nl-modal-btn">
+              Got it
+            </button>
           </div>
         </div>
       )}
 
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
-        <FloatingOrb delay={0} size="400px" color="#8B5CF6" />
-        <FloatingOrb delay={1} size="300px" color="#06B6D4" />
-        <FloatingOrb delay={2} size="500px" color="#EC4899" />
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }} />
+      {/* Main Registration Card */}
+      <div className="nl-reg-card">
+        <div className="nl-reg-header">
+          <div className="nl-reg-icon">
+            <Globe size={28} />
+          </div>
+          <h1 className="nl-reg-title">
+            Join <em>NodeLever</em>
+          </h1>
+          <p className="nl-reg-sub">Create your account to start training.</p>
         </div>
-      </div>
 
-      {/* Registration Card */}
-      <div className={`relative z-40 w-full max-w-md mx-auto px-6 transition-all duration-1500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 shadow-2xl">
-          {/* Logo/Brand */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <Globe className="w-12 h-12 text-purple-400" />
+        {/* Progress Bar */}
+        <div className="nl-step-container">
+          <div className={`nl-step-bar ${currentStep >= 1 ? 'active' : ''}`} />
+          <div className={`nl-step-bar ${currentStep >= 2 ? 'active' : ''}`} />
+        </div>
+
+        {/* Form Area */}
+        <div style={{ position: 'relative' }}>
+          
+          {/* Step 1 */}
+          <div className={`nl-step-view ${currentStep === 1 ? 'active' : 'hidden-left'}`}>
+            <div className="nl-form-group">
+              <label className="nl-label">First Name</label>
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                placeholder="Jane"
+                className="nl-input"
+              />
             </div>
-            <h1 className="text-3xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
-                Langwage
-              </span>
-            </h1>
-            <p className="text-gray-400">Welcome to the future of gaming</p>
+            <div className="nl-form-group">
+              <label className="nl-label">Last Name</label>
+              <input
+                type="text"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                placeholder="Doe"
+                className="nl-input"
+              />
+            </div>
+            <div className="nl-form-group">
+              <label className="nl-label">Email Address</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="jane@example.com"
+                className="nl-input"
+              />
+            </div>
+            <button type="button" onClick={handleNextStep} className="nl-btn-primary">
+              Continue <ArrowRight size={16} />
+            </button>
           </div>
 
-          {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex gap-2">
-              <div className={`h-1 flex-1 rounded-full transition-all duration-300 ${currentStep >= 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gray-700'}`} />
-              <div className={`h-1 flex-1 rounded-full transition-all duration-300 ${currentStep >= 2 ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gray-700'}`} />
-            </div>
-          </div>
-
-          {/* Registration Form */}
-          <div className="relative overflow-hidden">
-            {/* Step 1: Personal Info */}
-            <div className={`transition-all duration-500 ${currentStep === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full absolute inset-0 pointer-events-none'}`}>
-              <div className="space-y-5">
-                {/* First Name */}
-                <div className="space-y-2">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-300">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    placeholder="First Name"
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-                    required
-                  />
-                </div>
-
-                {/* Last Name */}
-                <div className="space-y-2">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-300">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    placeholder="Last Name"
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-                    required
-                  />
-                </div>
-
-                {/* Email Address */}
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Email Address"
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-                    required
-                  />
-                </div>
-
-                {/* Next Button */}
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="group w-full bg-gradient-to-r from-purple-600 to-pink-600 py-3 rounded-lg text-white font-semibold hover:scale-105 transform transition-all duration-300 shadow-2xl hover:shadow-purple-500/50 relative overflow-hidden mt-6"
+          {/* Step 2 */}
+          <div className={`nl-step-view ${currentStep === 2 ? 'active' : 'hidden-right'}`}>
+            <div className="nl-form-group">
+              <label className="nl-label">Password</label>
+              <div className="nl-input-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder="••••••••"
+                  className="nl-input"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="nl-input-icon-btn"
                 >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    Next <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Step 2: Password */}
-            <div className={`transition-all duration-500 ${currentStep === 2 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full absolute inset-0 pointer-events-none'}`}>
-              <div className="space-y-5">
-                {/* Password */}
-                <div className="space-y-2">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      placeholder="Password"
-                      className="w-full px-4 py-3 pr-12 rounded-lg bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      id="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      placeholder="Confirm Password"
-                      className="w-full px-4 py-3 pr-12 rounded-lg bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="rememberMe"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-600 bg-white/10 text-purple-600 focus:ring-purple-500 focus:ring-offset-0 cursor-pointer"
-                    />
-                    <label htmlFor="rememberMe" className="text-sm text-gray-300 cursor-pointer">
-                      Remember me
-                    </label>
-                  </div>
-                  <Link to="/forgot-password" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                    Forgot password?
-                  </Link>
-                </div>
-
-                {/* Navigation Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={handlePrevStep}
-                    disabled={isLoading}
-                    className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-gray-300 border border-white/20 transition-all duration-300 ${
-                      isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:border-purple-400 hover:text-white'
-                    }`}
-                  >
-                    <ArrowLeft className="w-5 h-5" /> Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className={`group flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-3 rounded-lg text-white font-semibold transform transition-all duration-300 shadow-2xl relative overflow-hidden ${
-                      isLoading ? 'opacity-80 cursor-not-allowed' : 'hover:scale-105 hover:shadow-purple-500/50'
-                    }`}
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" /> Processing...
-                        </>
-                      ) : (
-                        <>
-                          Sign Up <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </button>
-                </div>
+            <div className="nl-form-group">
+              <label className="nl-label">Confirm Password</label>
+              <div className="nl-input-wrapper">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  placeholder="••••••••"
+                  className="nl-input"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                  className="nl-input-icon-btn"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Sign In Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
-              Already have an account?{' '}
-              <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                Sign in
+            <div className="nl-checkbox-wrapper">
+              <label className="nl-checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="nl-checkbox" 
+                />
+                Remember me
+              </label>
+              <Link to="/forgot-password" className="nl-link" style={{ fontSize: '13px' }}>
+                Forgot password?
               </Link>
-            </p>
-          </div>
+            </div>
 
-          {/* Terms Link */}
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500">
-              By signing up, you agree to our{' '}
-              <Link to="/terms" className="text-purple-400 hover:text-purple-300 transition-colors">
-                Terms of Service
-              </Link>
-              {' '}and{' '}
-              <Link to="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors">
-                Privacy Policy
-              </Link>
-            </p>
+            <div className="nl-form-row">
+              <button 
+                type="button" 
+                onClick={handlePrevStep} 
+                disabled={isLoading}
+                className="nl-btn-secondary"
+              >
+                <ArrowLeft size={16} /> Back
+              </button>
+              <button 
+                type="button" 
+                onClick={handleSubmit} 
+                disabled={isLoading}
+                className="nl-btn-primary"
+              >
+                {isLoading ? (
+                  <><Loader2 size={16} className="lucide-loader-2" style={{ animation: 'spin 1s linear infinite' }} /> Processing...</>
+                ) : (
+                  <>Create Account <ArrowRight size={16} /></>
+                )}
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Footer Text */}
+        <div className="nl-footer-text">
+          Already have an account? <Link to="/login" className="nl-link">Sign in</Link>
+        </div>
+        <div className="nl-terms-text">
+          By signing up, you agree to our <Link to="/terms" className="nl-link">Terms</Link> and <Link to="/privacy" className="nl-link">Privacy</Link>.
         </div>
       </div>
     </div>

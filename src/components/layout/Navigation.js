@@ -30,19 +30,17 @@ const Navigation = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between h-20">
-          {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="text-2xl font-bold group">
               <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent group-hover:from-pink-400 group-hover:to-purple-400 transition-all duration-300">
-                Langwage
+                Node
               </span>
               <span className="text-white ml-2 group-hover:text-gray-300 transition-colors duration-300">
-                Inc
+                lever
               </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map(({ path, label }) => (
               <Link
@@ -65,8 +63,6 @@ const Navigation = () => {
                 )}
               </Link>
             ))}
-            
-            {/* Desktop Signup Button (Changed to Link) */}
             <Link 
               to="/reg" 
               className="bg-gradient-to-r from-purple-600 to-cyan-600 px-6 py-2 rounded-full text-white font-semibold hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25 transform transition-all duration-300 relative overflow-hidden group flex items-center justify-center"
@@ -76,7 +72,6 @@ const Navigation = () => {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -88,7 +83,6 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {isOpen && (
         <div className="md:hidden border-t border-purple-500/20 bg-black/95 backdrop-blur-lg">
           <div className="px-6 py-4 space-y-2">
@@ -109,8 +103,6 @@ const Navigation = () => {
                 )}
               </Link>
             ))}
-            
-            {/* Mobile Signup Button (Uncommented and changed to Link) */}
             <div className="pt-4 border-t border-purple-500/20">
               <Link 
                 to="/reg" 

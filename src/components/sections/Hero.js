@@ -1,153 +1,211 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Mail, Globe, Gamepad2, Zap, Users, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
+const styles = `
+  @keyframes pulse-ring { 0%,100%{opacity:.15;transform:scale(1)} 50%{opacity:.35;transform:scale(1.08)} }
+  @keyframes flow-dash { to{stroke-dashoffset:-40} }
+  @keyframes orbit { from{transform:rotate(0deg) translateX(88px) rotate(0deg)} to{transform:rotate(360deg) translateX(88px) rotate(-360deg)} }
+  @keyframes orbit-rev { from{transform:rotate(180deg) translateX(88px) rotate(-180deg)} to{transform:rotate(540deg) translateX(88px) rotate(-540deg)} }
+  @keyframes float-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes glow-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spark { 0%,100%{opacity:0;r:2px} 50%{opacity:1;r:4px} }
+
+  /* Mobile-First Base Styles */
+  .nl-hero { 
+    background:#0b0d14; 
+    overflow:hidden; 
+    position:relative; 
+    font-family:sans-serif; 
+    border-radius: 0;
+    /* FIX: Added padding-top to account for fixed navigation */
+    padding-top: 80px; 
+  }
+  
+  .nl-grid-bg { position:absolute;inset:0; background-image:linear-gradient(rgba(120,80,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,80,255,.07) 1px,transparent 1px); background-size:44px 44px; pointer-events:none; }
+  
+  /* Adjusted internal padding so it doesn't double-up with the hero padding */
+  .nl-content { display:flex; flex-direction:column; align-items:center; text-align:center; padding:20px 20px 40px; position:relative; z-index:5; gap:40px; }
+  .nl-left { display:flex; flex-direction:column; align-items:center; padding-right:0; }
+  .nl-badge { display:inline-flex;align-items:center;gap:6px; background:rgba(167,139,250,.1); border:0.5px solid rgba(167,139,250,.3); border-radius:20px;padding:5px 14px; font-size:11px;font-weight:500; color:#c4b5fd;letter-spacing:.5px;text-transform:uppercase; margin-bottom:20px; animation:glow-in .6s ease both; }
+  .nl-badge-dot { width:6px;height:6px;border-radius:50%;background:#a78bfa; animation:spark 1.6s ease-in-out infinite; }
+  
+  .nl-h1 { font-size:36px; font-weight:500; line-height:1.1; color:#fff; margin-bottom:18px; letter-spacing:-1px; animation:glow-in .6s .1s ease both; }
+  .nl-h1 em { font-style:normal; background:linear-gradient(135deg,#a78bfa 0%,#38bdf8 100%); -webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .nl-sub { font-size:15px;line-height:1.7; color:rgba(255,255,255,.5); margin-bottom:32px; animation:glow-in .6s .2s ease both; max-width:400px; }
+  
+  .nl-cta-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; animation:glow-in .6s .3s ease both; }
+  .nl-btn-primary { background:linear-gradient(135deg,#7c3aed,#0ea5e9); border:none;border-radius:24px;padding:12px 28px; color:#fff;font-size:14px;font-weight:500; cursor:pointer;transition:opacity .2s,transform .15s; white-space:nowrap; }
+  .nl-btn-primary:hover { opacity:.88;transform:translateY(-1px); }
+  .nl-btn-secondary { background:rgba(255,255,255,.05); border:0.5px solid rgba(255,255,255,.15); border-radius:24px;padding:12px 28px; color:rgba(255,255,255,.7);font-size:14px;font-weight:400; cursor:pointer;transition:background .2s,color .2s; white-space:nowrap; }
+  .nl-btn-secondary:hover { background:rgba(255,255,255,.1);color:#fff; }
+  
+  .nl-stats-row { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:36px; animation:glow-in .6s .4s ease both; padding-top:28px; border-top:0.5px solid rgba(255,255,255,.07); width:100%; }
+  .nl-stat-num { font-size:22px;font-weight:500;color:#fff; }
+  .nl-stat-label { font-size:12px;color:rgba(255,255,255,.4);margin-top:2px; }
+  
+  .nl-right { display:flex;align-items:center;justify-content:center; width:100%; min-height:auto; }
+  .nl-node-scene { position:relative; width:100%; max-width:360px; aspect-ratio:1; animation:float-up 4s ease-in-out infinite; }
+  .nl-node-scene svg { width:100%;height:100%;overflow:visible; }
+  
+  .nl-orbit-dot { width:10px;height:10px;border-radius:50%; position:absolute;top:50%;left:50%; margin:-5px 0 0 -5px; transform-origin:center center; }
+  .nl-orbit-1 { background:#a78bfa;animation:orbit 5s linear infinite;box-shadow:0 0 8px #a78bfa; }
+  .nl-orbit-2 { background:#38bdf8;animation:orbit-rev 7s linear infinite;box-shadow:0 0 8px #38bdf8; }
+  .nl-orbit-3 { background:#f472b6;animation:orbit 9s linear infinite;box-shadow:0 0 8px #f472b6; }
+  
+  .nl-cards-row { display:grid; grid-template-columns:1fr; gap:16px; padding:0 20px 40px; position:relative; z-index:5; }
+  .nl-card { background:rgba(255,255,255,.03); border:0.5px solid rgba(255,255,255,.08); border-radius:14px;padding:20px; transition:border-color .25s,background .25s; }
+  .nl-card:hover { border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05); }
+  .nl-card-icon { width:36px;height:36px;border-radius:10px; display:flex;align-items:center;justify-content:center; margin-bottom:12px; }
+  .nl-card-icon svg { width:18px;height:18px; }
+  .nl-card h3 { font-size:13px;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:6px; }
+  .nl-card p { font-size:12px;color:rgba(255,255,255,.4);line-height:1.5; }
+
+  /* Desktop Queries */
+  @media (min-width: 1024px) {
+    .nl-hero { border-radius:20px; min-height:680px; padding-top:100px; }
+    .nl-content { display:grid; grid-template-columns:1fr 1fr; align-items:center; text-align:left; padding:40px 36px 48px; gap:0; }
+    .nl-left { display:block; padding-right:32px; }
+    .nl-h1 { font-size:46px; }
+    .nl-cta-row { justify-content:flex-start; }
+    .nl-stats-row { justify-content:flex-start; gap:28px; }
+    .nl-cards-row { grid-template-columns:repeat(3, 1fr); gap:12px; padding:0 36px 40px; }
+    .nl-node-scene { width:360px; height:360px; aspect-ratio:auto; }
+  }
+`;
 
 export default function LangwageHero() {
-  const [email, setEmail] = useState('');
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(false);
+  const [injected, setInjected] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  const FloatingOrb = ({ delay, size, color }) => (
-    <div 
-      className={`absolute rounded-full blur-xl opacity-30 animate-pulse`}
-      style={{
-        width: size,
-        height: size,
-        background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-        animationDelay: `${delay}s`,
-        animationDuration: '4s',
-        transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
-      }}
-    />
-  );
+    if (!injected) {
+      const tag = document.createElement('style');
+      tag.textContent = styles;
+      document.head.appendChild(tag);
+      setInjected(true);
+    }
+  }, [injected]);
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20" />
-        <FloatingOrb delay={0} size="400px" color="#8B5CF6" />
-        <FloatingOrb delay={1} size="300px" color="#06B6D4" />
-        <FloatingOrb delay={2} size="500px" color="#EC4899" />
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="h-full w-full" style={{
-            backgroundImage: `
-              linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }} />
-        </div>
-      </div>
-
-      
-      {/* Hero Content */}
-      <div className="relative z-40 max-w-7xl mx-auto px-6 pt-32">
-        <div className={`text-center transition-all duration-1500 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
-          {/* Main Headline */}
-          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
-            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-pulse">
-              Immerse
-            </span>
-            <br />
-            <span className="text-white">the World</span>
+    <div className="nl-hero">
+      <div className="nl-grid-bg" />
+      <div className="nl-content">
+        <div className="nl-left">
+          <div className="nl-badge">
+            <div className="nl-badge-dot" />
+            AI Training Platform
+          </div>
+          <h1 className="nl-h1">
+            Train. Connect.<br /><em>Get Paid.</em>
           </h1>
-
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-            Explore the next frontier where artificial intelligence seamlessly blends languages in gaming — 
-            setting the stage for <span className="text-purple-400 font-semibold">true global interaction</span>.
+          <p className="nl-sub">
+            NodeLever links cathode learners with anode experts — two poles that together
+            complete the circuit of AI-powered career growth.
           </p>
-
-          {/* CTA Buttons */}
-
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
-            <button className="group bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 rounded-full text-white font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-2xl hover:shadow-purple-500/50 relative overflow-hidden">
-             <Link to="/about">
-              <span className="relative z-10 flex items-center gap-2">
-                Learn More <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Link>
-            </button>
-            {/* <button className="border-2 border-cyan-400 text-cyan-400 px-8 py-4 rounded-full font-bold text-lg hover:bg-cyan-400 hover:text-black transform transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-400/25">
-              Join the Revolution
-            </button> */}
+          <div className="nl-cta-row">
+            <button className="nl-btn-primary">Start Training →</button>
+            <button className="nl-btn-secondary">Browse Jobs</button>
+          </div>
+          <div className="nl-stats-row">
+            <div className="nl-stat">
+              <div className="nl-stat-num">12,400+</div>
+              <div className="nl-stat-label">Trained members</div>
+            </div>
+            <div className="nl-stat">
+              <div className="nl-stat-num">$3.2M</div>
+              <div className="nl-stat-label">Paid out</div>
+            </div>
+            <div className="nl-stat">
+              <div className="nl-stat-num">840</div>
+              <div className="nl-stat-label">Active jobs</div>
+            </div>
           </div>
         </div>
 
-        {/* Feature Cards */}
-        <div className={`grid md:grid-cols-3 gap-8 mb-20 transition-all duration-1500 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 hover:border-purple-400/50 transition-all duration-300 hover:scale-105 group">
-            <Globe className="w-12 h-12 text-purple-400 mb-6 group-hover:scale-110 transition-transform" />
-            <h3 className="text-2xl font-bold text-white mb-4">Innovative Multilingual Dubbing Solutions</h3>
-            <p className="text-gray-300 leading-relaxed">
-              At Langwage Inc, we harness AI to create immersive multilingual dubbing for live gaming, 
-              enhancing player experiences across diverse languages and cultures.
-            </p>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 hover:border-cyan-400/50 transition-all duration-300 hover:scale-105 group">
-            <Gamepad2 className="w-12 h-12 text-cyan-400 mb-6 group-hover:scale-110 transition-transform" />
-            <h3 className="text-2xl font-bold text-white mb-4">About Langwage Inc</h3>
-            <p className="text-gray-300 leading-relaxed">
-              Our mission is to revolutionize gaming with advanced AI technology, ensuring seamless 
-              multilingual experiences that connect players worldwide through immersive dubbing solutions.
-            </p>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 hover:border-pink-400/50 transition-all duration-300 hover:scale-105 group">
-            <Zap className="w-12 h-12 text-pink-400 mb-6 group-hover:scale-110 transition-transform" />
-            <h3 className="text-2xl font-bold text-white mb-4">AI-Powered Dubbing</h3>
-            <p className="text-gray-300 leading-relaxed">
-              Innovative AI solutions for multilingual gaming experiences that break down language barriers 
-              and create truly global gaming communities.
-            </p>
-          </div>
-        </div>
-
-        {/* Email Signup */}
-        <div className={`max-w-2xl mx-auto text-center transition-all duration-1500 delay-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
-          <h3 className="text-3xl font-bold text-white mb-4">Join Our Dubbing Solution</h3>
-          <p className="text-gray-300 mb-8">
-            For more info: <a href="mailto:Hey@langwage.live" className="text-purple-400 hover:text-purple-300 transition-colors">Hey@langwage.live</a>
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-6 py-4 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
-            />
-            <button 
-              className="bg-gradient-to-r from-purple-600 to-cyan-600 px-8 py-4 rounded-full text-white font-bold hover:scale-105 transform transition-all duration-300 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2 justify-center"
-              onClick={() => setEmail('')}
-            >
-              <Mail className="w-5 h-5" />
-              Join
-            </button>
+        <div className="nl-right">
+          <div className="nl-node-scene">
+            <svg viewBox="0 0 360 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="glow-purple" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#7c3aed" stopOpacity=".4"/>
+                  <stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/>
+                </radialGradient>
+                <radialGradient id="glow-blue" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity=".4"/>
+                  <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0"/>
+                </radialGradient>
+              </defs>
+              <circle cx="110" cy="180" r="72" stroke="#a78bfa" strokeWidth=".5" strokeDasharray="3 4" opacity=".3"
+                style={{animation:'pulse-ring 3s ease-in-out infinite'}}/>
+              <circle cx="250" cy="180" r="72" stroke="#38bdf8" strokeWidth=".5" strokeDasharray="3 4" opacity=".3"
+                style={{animation:'pulse-ring 3s .5s ease-in-out infinite'}}/>
+              <circle cx="110" cy="180" r="80" fill="url(#glow-purple)" opacity=".6"/>
+              <circle cx="250" cy="180" r="80" fill="url(#glow-blue)" opacity=".6"/>
+              <line x1="155" y1="165" x2="205" y2="165" stroke="rgba(167,139,250,.25)" strokeWidth="1"
+                strokeDasharray="5 5" style={{animation:'flow-dash 1.4s linear infinite'}}/>
+              <line x1="155" y1="180" x2="205" y2="180" stroke="rgba(167,139,250,.4)" strokeWidth="1.2"
+                strokeDasharray="5 5" style={{animation:'flow-dash 1s linear infinite'}}/>
+              <line x1="155" y1="195" x2="205" y2="195" stroke="rgba(56,189,248,.25)" strokeWidth="1"
+                strokeDasharray="5 5" style={{animation:'flow-dash 1.6s linear infinite'}}/>
+              <circle cx="110" cy="180" r="52" fill="#0b0d14" stroke="#a78bfa" strokeWidth="1"/>
+              <circle cx="110" cy="180" r="34" fill="rgba(124,58,237,.12)" stroke="rgba(167,139,250,.2)" strokeWidth=".5"/>
+              <circle cx="110" cy="180" r="14" fill="#7c3aed" opacity=".9"/>
+              <text x="110" y="250" textAnchor="middle" fontSize="11" fill="#a78bfa" fontFamily="sans-serif" opacity=".8">Cathode</text>
+              <text x="110" y="262" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,.3)" fontFamily="sans-serif">Learner</text>
+              <circle cx="250" cy="180" r="52" fill="#0b0d14" stroke="#38bdf8" strokeWidth="1"/>
+              <circle cx="250" cy="180" r="34" fill="rgba(14,165,233,.12)" stroke="rgba(56,189,248,.2)" strokeWidth=".5"/>
+              <circle cx="250" cy="180" r="14" fill="#0ea5e9" opacity=".9"/>
+              <text x="250" y="250" textAnchor="middle" fontSize="11" fill="#38bdf8" fontFamily="sans-serif" opacity=".8">Anode</text>
+              <text x="250" y="262" textAnchor="middle" fontSize="10" fill="rgba(255,255,255,.3)" fontFamily="sans-serif">Expert</text>
+              <circle cx="180" cy="172" r="2.5" fill="#f472b6"
+                style={{animation:'spark 1.2s .1s ease-in-out infinite'}}/>
+              <circle cx="180" cy="180" r="3.5" fill="#fff" opacity=".7"
+                style={{animation:'spark 1s ease-in-out infinite'}}/>
+              <circle cx="180" cy="188" r="2.5" fill="#f472b6"
+                style={{animation:'spark 1.2s .2s ease-in-out infinite'}}/>
+              <line x1="110" y1="120" x2="110" y2="96" stroke="rgba(167,139,250,.2)" strokeWidth=".5"/>
+              <rect x="70" y="78" width="80" height="22" rx="11" fill="rgba(124,58,237,.15)" stroke="rgba(167,139,250,.25)" strokeWidth=".5"/>
+              <text x="110" y="93" textAnchor="middle" fontSize="11" fill="#c4b5fd" fontFamily="sans-serif">– pole</text>
+              <line x1="250" y1="120" x2="250" y2="96" stroke="rgba(56,189,248,.2)" strokeWidth=".5"/>
+              <rect x="210" y="78" width="80" height="22" rx="11" fill="rgba(14,165,233,.15)" stroke="rgba(56,189,248,.25)" strokeWidth=".5"/>
+              <text x="250" y="93" textAnchor="middle" fontSize="11" fill="#7dd3fc" fontFamily="sans-serif">+ pole</text>
+            </svg>
+            <div className="nl-orbit-dot nl-orbit-1" />
+            <div className="nl-orbit-dot nl-orbit-2" />
+            <div className="nl-orbit-dot nl-orbit-3" />
           </div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <div className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-2000 delay-1500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-        <ChevronDown className="w-8 h-8 text-white/50 animate-bounce" />
+      <div className="nl-cards-row">
+        {/* ... (Cards remain the same) */}
+        <div className="nl-card">
+          <div className="nl-card-icon" style={{background:'rgba(124,58,237,.12)'}}>
+            <svg viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="5" width="14" height="10" rx="2" stroke="#a78bfa" strokeWidth="1.2"/>
+              <path d="M6 5V4a3 3 0 016 0v1" stroke="#a78bfa" strokeWidth="1.2"/>
+            </svg>
+          </div>
+          <h3>Structured AI Training</h3>
+          <p>Earn verified credentials through role-based AI training paths built by industry experts.</p>
+        </div>
+        <div className="nl-card">
+          <div className="nl-card-icon" style={{background:'rgba(14,165,233,.12)'}}>
+            <svg viewBox="0 0 18 18" fill="none">
+              <circle cx="9" cy="9" r="6" stroke="#38bdf8" strokeWidth="1.2"/>
+              <path d="M9 6v3l2 2" stroke="#38bdf8" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h3>Live Job Matching</h3>
+          <p>Match with AI roles in real time based on your completed modules and skill nodes.</p>
+        </div>
+        <div className="nl-card">
+          <div className="nl-card-icon" style={{background:'rgba(244,114,182,.1)'}}>
+            <svg viewBox="0 0 18 18" fill="none">
+              <path d="M3 13l4-4 3 3 5-6" stroke="#f472b6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h3>Get Paid to Contribute</h3>
+          <p>Annotate data, fine-tune models, and evaluate outputs — and earn directly on the platform.</p>
+        </div>
       </div>
     </div>
   );
