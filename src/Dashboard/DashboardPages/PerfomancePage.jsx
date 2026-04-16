@@ -3,13 +3,13 @@ import React from 'react';
 export const PerformancePage = () => {
   // Weekly data mapping - currently flatlining at 0 to match your metrics
   const chartData = [
-    { label: 'Mon', value: 50 },
-    { label: 'Tue', value: 100 },
-    { label: 'Wed', value: 200 },
-    { label: 'Thu', value: 30 },
-    { label: 'Fri', value: 20 },
-    { label: 'Sat', value: 150 },
-    { label: 'Sun', value: 70 },
+    { label: 'Mon', value: 0 },
+    { label: 'Tue', value: 0 },
+    { label: 'Wed', value: 0 },
+    { label: 'Thu', value: 0 },
+    { label: 'Fri', value: 0 },
+    { label: 'Sat', value: 0 },
+    { label: 'Sun', value: 0 },
   ];
 
   return (
