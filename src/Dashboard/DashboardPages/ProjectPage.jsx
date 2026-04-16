@@ -250,7 +250,7 @@ export const ProjectPage = () => {
                   className="mt-1 cursor-pointer w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500"
                 />
                 <label className="text-sm text-gray-300 leading-snug cursor-pointer" onClick={() => setFormData(p => ({...p, consent: !p.consent}))}>
-                  Yes, CrowdGen by Appen can contact me about future job opportunities for up to 3 years <br/>
+                  Yes, Nodelever can contact me about future job opportunities for up to 3 years <br/>
                   <a href="#" className="text-cyan-400 hover:underline text-xs">Privacy policy</a>
                 </label>
               </div>
