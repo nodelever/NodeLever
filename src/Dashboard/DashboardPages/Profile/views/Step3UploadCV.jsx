@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, Upload } from 'lucide-react';
 import { ProgressBar } from '../components/ProgressBar';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { useProfileStore } from '../store/useProfileStore';
@@ -7,11 +7,10 @@ import { useProfileStore } from '../store/useProfileStore';
 export const Step3UploadCV = () => {
   const errors = useProfileStore((state) => state.errors);
   const currentStep = useProfileStore((state) => state.currentStep);
-  const loading = useProfileStore((state) => state.loading);
   const formData = useProfileStore((state) => state.formData);
   const handleInputChange = useProfileStore((state) => state.handleInputChange);
   const handleBack = useProfileStore((state) => state.handleBack);
-  const handleSubmit = useProfileStore((state) => state.handleSubmit);
+  const handleNext = useProfileStore((state) => state.handleNext); // <-- Use handleNext instead of handleSubmit
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-6">
@@ -20,7 +19,6 @@ export const Step3UploadCV = () => {
           <button 
             onClick={handleBack}
             className="flex items-center text-purple-400 hover:text-purple-300 mb-6 transition-colors"
-            disabled={loading}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Address
@@ -49,21 +47,13 @@ export const Step3UploadCV = () => {
               </label>
             </div>
             <ErrorMessage message={errors.cvFile} />
-            <ErrorMessage message={errors.submit} />
 
+            {/* Changed from Submit to Next Step */}
             <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium mt-8 shadow-lg shadow-purple-900/20 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleNext}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all font-medium mt-8 shadow-lg shadow-purple-900/20"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Submitting Profile...
-                </>
-              ) : (
-                'Submit Profile'
-              )}
+              Next Step
             </button>
           </div>
         </div>

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Globe, Eye, EyeOff, ArrowLeft, Loader2, AlertCircle, Home } from 'lucide-react';
+import { ArrowRight, Globe, Eye, EyeOff, ArrowLeft, Loader2, AlertCircle, Home, MailCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const regStyles = `
   /* Shared Keyframes */
   @keyframes glow-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes float-up { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
   
   /* Container & Backgrounds */
   .nl-reg-wrapper {
@@ -120,7 +119,8 @@ export default function LangwageRegistration() {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    otp: '' // <-- Added OTP field
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -129,8 +129,19 @@ export default function LangwageRegistration() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Inject styles matching the Hero page pattern
+
+  useEffect(() => {
+  let timer;
+  if (resendCooldown > 0) {
+    timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+  }
+  return () => clearInterval(timer);
+}, [resendCooldown]);
+
   useEffect(() => {
     if (!injected) {
       const tag = document.createElement('style');
@@ -166,17 +177,17 @@ export default function LangwageRegistration() {
   };
 
   const handlePrevStep = () => {
-    if (currentStep === 2) {
-      setCurrentStep(1);
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
-  const handleSubmit = async () => {
+  // STEP 2 -> STEP 3: Request OTP
+  const handleRequestOTP = async () => {
     if (!formData.password || !formData.confirmPassword) {
       setErrorMsg('Please enter and confirm your password.');
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setErrorMsg('Passwords do not match. Please try again.');
       return;
@@ -186,30 +197,62 @@ export default function LangwageRegistration() {
     setErrorMsg('');
 
     try {
-      const response = await fetch('https://the-king-backend.onrender.com/reg', {
+      const response = await fetch('https://the-king-backend.onrender.com/api/auth/send-otp', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
           email: formData.email,
-          password: formData.password
+          firstName: formData.firstName 
         })
       });
 
       const data = await response.json();
       
       if (response.ok) {
-        setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
-        setCurrentStep(1);
+        setResendCooldown(60);
+        setCurrentStep(3); // Move to OTP verification step
+      } else {
+        setErrorMsg(data.message || 'Failed to send verification code.');
+      }
+    } catch (error) {
+      setErrorMsg('Network error. Please check your connection.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // STEP 3 -> SUBMIT: Verify OTP and Register
+  const handleFinalSubmit = async () => {
+    if (!formData.otp || formData.otp.length < 6) {
+      setErrorMsg('Please enter a valid 6-digit verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg('');
+
+    try {
+      const response = await fetch('https://the-king-backend.onrender.com/reg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          otp: formData.otp // Send the OTP along with the data
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', otp: '' });
         navigate('/login'); 
       } else {
         setErrorMsg(data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
-      console.error('Registration error:', error);
       setErrorMsg('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
@@ -220,7 +263,6 @@ export default function LangwageRegistration() {
     <div className="nl-reg-wrapper">
       <div className="nl-grid-bg" />
       
-      {/* Background Ambient Orbs linked to mouse */}
       <div 
         className="nl-glow-orb nl-glow-1" 
         style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)` }} 
@@ -230,12 +272,10 @@ export default function LangwageRegistration() {
         style={{ transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)` }} 
       />
 
-      {/* Floating Home Nav */}
       <Link to="/" className="nl-back-nav">
         <Home size={16} /> Home
       </Link>
       
-      {/* Error Modal */}
       {errorMsg && (
         <div className="nl-modal-overlay">
           <div className="nl-modal">
@@ -252,28 +292,31 @@ export default function LangwageRegistration() {
         </div>
       )}
 
-      {/* Main Registration Card */}
       <div className="nl-reg-card">
         <div className="nl-reg-header">
           <div className="nl-reg-icon">
-            <Globe size={28} />
+            {currentStep === 3 ? <MailCheck size={28} /> : <Globe size={28} />}
           </div>
           <h1 className="nl-reg-title">
-            Join <em>NodeLever</em>
+            {currentStep === 3 ? 'Verify Email' : <>Join <em>NodeLever</em></>}
           </h1>
-          <p className="nl-reg-sub">Create your account to start training.</p>
+          <p className="nl-reg-sub">
+            {currentStep === 3 
+              ? `We sent a code to ${formData.email}` 
+              : 'Create your account to start training.'}
+          </p>
         </div>
 
-        {/* Progress Bar */}
+        {/* Updated Progress Bar to 3 Steps */}
         <div className="nl-step-container">
           <div className={`nl-step-bar ${currentStep >= 1 ? 'active' : ''}`} />
           <div className={`nl-step-bar ${currentStep >= 2 ? 'active' : ''}`} />
+          <div className={`nl-step-bar ${currentStep >= 3 ? 'active' : ''}`} />
         </div>
 
-        {/* Form Area */}
         <div style={{ position: 'relative' }}>
           
-          {/* Step 1 */}
+          {/* Step 1: Personal Details */}
           <div className={`nl-step-view ${currentStep === 1 ? 'active' : 'hidden-left'}`}>
             <div className="nl-form-group">
               <label className="nl-label">First Name</label>
@@ -310,8 +353,8 @@ export default function LangwageRegistration() {
             </button>
           </div>
 
-          {/* Step 2 */}
-          <div className={`nl-step-view ${currentStep === 2 ? 'active' : 'hidden-right'}`}>
+          {/* Step 2: Password Setup */}
+          <div className={`nl-step-view ${currentStep === 2 ? 'active' : (currentStep < 2 ? 'hidden-right' : 'hidden-left')}`}>
             <div className="nl-form-group">
               <label className="nl-label">Password</label>
               <div className="nl-input-wrapper">
@@ -378,21 +421,66 @@ export default function LangwageRegistration() {
               </button>
               <button 
                 type="button" 
-                onClick={handleSubmit} 
+                onClick={handleRequestOTP} 
                 disabled={isLoading}
                 className="nl-btn-primary"
               >
                 {isLoading ? (
-                  <><Loader2 size={16} className="lucide-loader-2" style={{ animation: 'spin 1s linear infinite' }} /> Processing...</>
+                  <><Loader2 size={16} className="lucide-loader-2" style={{ animation: 'spin 1s linear infinite' }} /> Sending Code...</>
+                ) : (
+                  <>Send Verification <ArrowRight size={16} /></>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 3: OTP Verification */}
+          <div className={`nl-step-view ${currentStep === 3 ? 'active' : 'hidden-right'}`}>
+            <div className="nl-form-group">
+              <label className="nl-label">6-Digit Code</label>
+              <input
+                type="text"
+                maxLength="6"
+                value={formData.otp}
+                onChange={(e) => handleInputChange('otp', e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+                className="nl-input"
+                style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px' }}
+              />
+            </div>
+
+            <div className="nl-checkbox-wrapper" style={{ justifyContent: 'center' }}>
+              <span onClick={handleRequestOTP} className="nl-link" style={{ fontSize: '13px' }}>
+                Didn't receive a code? Resend
+              </span>
+            </div>
+
+            <div className="nl-form-row">
+              <button 
+                type="button" 
+                onClick={handlePrevStep} 
+                disabled={isLoading}
+                className="nl-btn-secondary"
+              >
+                <ArrowLeft size={16} /> Back
+              </button>
+              <button 
+                type="button" 
+                onClick={handleFinalSubmit} 
+                disabled={isLoading || formData.otp.length < 6}
+                className="nl-btn-primary"
+              >
+                {isLoading ? (
+                  <><Loader2 size={16} className="lucide-loader-2" style={{ animation: 'spin 1s linear infinite' }} /> Verifying...</>
                 ) : (
                   <>Create Account <ArrowRight size={16} /></>
                 )}
               </button>
             </div>
           </div>
+
         </div>
 
-        {/* Footer Text */}
         <div className="nl-footer-text">
           Already have an account? <Link to="/login" className="nl-link">Sign in</Link>
         </div>

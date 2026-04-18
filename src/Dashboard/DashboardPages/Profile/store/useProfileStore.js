@@ -13,12 +13,11 @@ export const useProfileStore = create((set, get) => ({
     dataReviewed: true,
     legalAgreed: false,
     identityVerified: false,
-    taxStatus: 'idle' // Add this: 'idle' | 'pending' | 'verified'
-
+    taxStatus: 'idle'
   },
   formData: {
     email: '',
-    countryCode: '+1', // <-- Added default country code here
+    countryCode: '+1',
     phoneNumber: '',
     dateOfBirth: '',
     address: '',
@@ -26,7 +25,11 @@ export const useProfileStore = create((set, get) => ({
     state: '',
     city: '',
     zipCode: '',
-    cvFile: null
+    cvFile: null,
+    // --- Added ID Fields ---
+    idType: 'passport', // default to passport
+    idFront: null,
+    idBack: null
   },
 
   // --- ACTIONS ---
@@ -36,12 +39,18 @@ export const useProfileStore = create((set, get) => ({
 
   handleInputChange: (field, value) => {
     set((state) => {
-      // Clear error for this field when user starts typing
       const newErrors = { ...state.errors };
       if (newErrors[field]) delete newErrors[field];
       
+      // If switching ID type, clear the opposite required errors/files
+      let updatedFormData = { ...state.formData, [field]: value };
+      if (field === 'idType' && value === 'passport') {
+        updatedFormData.idBack = null; // passports don't strictly need a back page
+        delete newErrors.idBack;
+      }
+
       return {
-        formData: { ...state.formData, [field]: value },
+        formData: updatedFormData,
         errors: newErrors
       };
     });
@@ -85,6 +94,25 @@ export const useProfileStore = create((set, get) => ({
       }
     }
 
+    // --- Added Step 4 Validation ---
+    if (step === 4) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      
+      if (!formData.idFront) newErrors.idFront = 'Please upload the front of your ID';
+      else {
+        if (!validImageTypes.includes(formData.idFront.type)) newErrors.idFront = 'Only JPG, PNG, and PDF files are allowed';
+        if (formData.idFront.size > 5 * 1024 * 1024) newErrors.idFront = 'File size must be less than 5MB';
+      }
+
+      if (formData.idType === 'license') {
+        if (!formData.idBack) newErrors.idBack = 'Please upload the back of your ID';
+        else {
+          if (!validImageTypes.includes(formData.idBack.type)) newErrors.idBack = 'Only JPG, PNG, and PDF files are allowed';
+          if (formData.idBack.size > 5 * 1024 * 1024) newErrors.idBack = 'File size must be less than 5MB';
+        }
+      }
+    }
+
     set({ errors: newErrors });
     return Object.keys(newErrors).length === 0;
   },
@@ -92,7 +120,7 @@ export const useProfileStore = create((set, get) => ({
   handleNext: () => {
     const { currentStep, validateStep } = get();
     if (validateStep(currentStep)) {
-      if (currentStep < 3) {
+      if (currentStep < 4) { // <-- Increased to 4
         set({ currentStep: currentStep + 1, view: `step${currentStep + 1}` });
       }
     }
@@ -107,7 +135,6 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  // --- ASYNC API SIMULATIONS ---
   fetchUserStatus: async () => {
     set({ loading: true });
     try {
@@ -129,45 +156,36 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-handleSubmit: async () => {
-  const { validateStep, formData } = get();
-  if (!validateStep(3)) return;
+  handleSubmit: async () => {
+    const { validateStep, formData } = get();
+    if (!validateStep(4)) return; // <-- Changed validation to Step 4
 
-  set({ loading: true });
-  try {
-    const token = localStorage.getItem('token'); 
-    if (!token) throw new Error('Not authenticated');
+    set({ loading: true });
+    try {
+      const token = localStorage.getItem('token'); 
+      if (!token) throw new Error('Not authenticated');
 
-    const dataToSend = new FormData();
+      const dataToSend = new FormData();
 
-    // Loop through keys but handle phone number specially
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== null && formData[key] !== undefined) {
-        
-        if (key === 'phoneNumber') {
-          // COMBINE: countryCode + phoneNumber into the 'phoneNumber' field
-          const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
-          dataToSend.append('phoneNumber', fullPhone);
-        } 
-        else if (key === 'countryCode') {
-          // SKIP: We don't need to send countryCode as a separate field
-          return; 
-        } 
-        else {
-          // APPEND everything else normally
-          dataToSend.append(key, formData[key]);
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          if (key === 'phoneNumber') {
+            const fullPhone = `${formData.countryCode}${formData.phoneNumber}`;
+            dataToSend.append('phoneNumber', fullPhone);
+          } 
+          else if (key === 'countryCode') {
+            return; 
+          } 
+          else {
+            // This loop naturally appends idType, idFront, and idBack alongside the CV!
+            dataToSend.append(key, formData[key]);
+          }
         }
+      });
 
-      }
-    });
-
-    // ... rest of your fetch call remains the same
-
-      // 3. Send the request with the Auth header
       const response = await fetch('https://the-king-backend.onrender.com/api/profile/submit', {
         method: 'POST',
         headers: {
-          // Do NOT set 'Content-Type': 'multipart/form-data'. The browser does this automatically!
           'Authorization': `Bearer ${token}` 
         },
         body: dataToSend,
@@ -180,14 +198,12 @@ handleSubmit: async () => {
 
       const data = await response.json();
 
-      // 4. Update the frontend state on success
       set((state) => ({
-        // Use the updated status from the backend
         userStatus: data.userStatus, 
         view: 'overview',
         currentStep: 1,
         showTaxModal: true,
-        formData: { ...state.formData, cvFile: null } // Clear file from memory
+        formData: { ...state.formData, cvFile: null, idFront: null, idBack: null } // Clear all files from memory
       }));
 
     } catch (error) {
@@ -212,7 +228,6 @@ handleSubmit: async () => {
 
       if (!response.ok) throw new Error('Failed to accept agreement');
 
-      // Update local state to reflect the successful database update
       set((state) => ({
         userStatus: { ...state.userStatus, legalAgreed: true },
         showLegalModal: false
