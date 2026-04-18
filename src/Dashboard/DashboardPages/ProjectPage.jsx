@@ -197,6 +197,7 @@ export const ProjectPage = () => {
       // Construct FormData for proper file handling and nested data
       const payload = new FormData();
       payload.append('projectId', applyingFor.id);
+      payload.append('projectTitle', applyingFor.title);
       
       // Append standard fields
       Object.keys(formData).forEach(key => {
