@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const styles = `
   @keyframes pulse-ring { 0%,100%{opacity:.15;transform:scale(1)} 50%{opacity:.35;transform:scale(1.08)} }
@@ -101,9 +102,8 @@ export default function LangwageHero() {
             complete the circuit of AI-powered career growth.
           </p>
           <div className="nl-cta-row">
-            <button className="nl-btn-primary">Start Training →</button>
-            <button className="nl-btn-secondary">Browse Jobs</button>
-          </div>
+            <Link to="/reg" className="nl-btn-primary">Start Training →</Link>
+            <Link to="/blog" className="nl-btn-secondary">Browse Jobs</Link>          </div>
           <div className="nl-stats-row">
             <div className="nl-stat">
               <div className="nl-stat-num">12,400+</div>
