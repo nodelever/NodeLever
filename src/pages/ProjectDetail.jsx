@@ -44,7 +44,7 @@ export default function ProjectDetail() {
               <h2 className="nl-project-title">{project.title}</h2>
             </div>
             <div style={{display: 'flex', gap: '15px'}}>
-              <Link to="/" className="nl-btn-primary" style={{ background: 'rgba(255,255,255,0.1)' }}>← Back</Link>
+              <Link to="/project" className="nl-btn-primary" style={{ background: 'rgba(255,255,255,0.1)' }}>← Back</Link>
               <Link to="/reg" className="nl-btn-primary">Register Now →</Link>
             </div>
           </div>
