@@ -15,7 +15,11 @@ import LangwageRegistration from './pages/RegistrationPage';
 import LangwageDashboard from './Dashboard/Dashboard';
 import EmailVerified from './components/sections/EmailVerified';
 
-// 1. Import the new legal pages
+// 1. Import the new Project List and Detail components instead of the single ProjectsPage
+import ProjectsList from './pages/ProjectsList';
+import ProjectDetail from './pages/ProjectDetail';
+
+// Import the legal pages
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 
@@ -47,13 +51,17 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {shouldShowNavigation && <Navigation />}
       
-      <main className="flex-grow bg-black"> {/* Added bg-black here to prevent white flashes */}
+      <main className="flex-grow bg-black">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/blog" element={<BlogPage />} />
 
-          {/* 2. Add the Legal Routes */}
+          {/* 2. New Dynamic Project Routes */}
+          <Route path="/project" element={<ProjectsList />} />
+          <Route path="/project/:id" element={<ProjectDetail />} />
+
+          {/* Legal Routes */}
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
 
