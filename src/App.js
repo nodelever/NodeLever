@@ -10,7 +10,7 @@ import Footer from './components/layout/Footer';
 import Home from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import LangwageLogin from './pages/LoginPage';
-import BlogPage from './pages/BlogPage';
+// import BlogPage from './pages/BlogPage';
 import LangwageRegistration from './pages/RegistrationPage';
 import LangwageDashboard from './Dashboard/Dashboard';
 import EmailVerified from './components/sections/EmailVerified';
@@ -55,7 +55,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/blog" element={<BlogPage />} />
+        
 
           {/* 2. New Dynamic Project Routes */}
           <Route path="/project" element={<ProjectsList />} />
