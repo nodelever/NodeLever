@@ -11,8 +11,9 @@ const Navigation = () => {
     { path: '/', label: 'Home' },
     { path: '/blog', label: 'Solutions' },
     { path: '/about', label: 'About' },
-    { path: '/login', label: 'Sign In' },
-     { path: '/project', label: 'Projects' }
+    { path: '/project', label: 'Projects' },
+    { path: '/login', label: 'Sign In' }
+    
   ];
 
   useEffect(() => {
