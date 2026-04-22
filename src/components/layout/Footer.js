@@ -80,23 +80,23 @@ const Footer = () => {
   };
 
   const footerLinks = {
-    Platform: [
-      { name: 'Training Paths', href: '/platform/training' },
-      { name: 'Job Matching', href: '/platform/jobs' },
-      { name: 'Earn & Contribute', href: '/platform/earn' },
-      { name: 'Skill Nodes', href: '/platform/nodes' },
-    ],
-    Company: [
-      { name: 'Careers', href: '/careers' },
-    ],
-    Resources: [
-      { name: 'Documentation', href: '/docs' },
-      { name: 'Support Center', href: '/support' },
-    ],
+    // Platform: [
+    //   { name: 'Training Paths', href: '/platform/training' },
+    //   { name: 'Job Matching', href: '/platform/jobs' },
+    //   { name: 'Earn & Contribute', href: '/platform/earn' },
+    //   { name: 'Skill Nodes', href: '/platform/nodes' },
+    // ],
+    // Company: [
+    //   { name: 'Careers', href: '/careers' },
+    // ],
+    // Resources: [
+    //   { name: 'Documentation', href: '/docs' },
+    //   { name: 'Support Center', href: '/support' },
+    // ],
     Legal: [
       { name: 'Privacy Policy', href: '/privacy' },
       { name: 'Terms of Service', href: '/terms' },
-      { name: 'Cookie Policy', href: '/cookies' },
+      // { name: 'Cookie Policy', href: '/cookies' },
     ],
   };
 
@@ -164,7 +164,7 @@ const Footer = () => {
             </div>
 
             {/* Newsletter */}
-            <div>
+            {/* <div>
               <div className="nl-newsletter-title">Stay Updated</div>
               <p className="nl-newsletter-desc">
                 Get the latest on AI training paths, new job nodes, and platform updates.
@@ -186,7 +186,7 @@ const Footer = () => {
                   )}
                 </button>
               </form>
-            </div>
+            </div> */}
           </div>
 
           <div className="nl-footer-bottom">
