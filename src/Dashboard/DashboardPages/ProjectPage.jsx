@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import locationData from './locations.json'; // Make sure this path matches where you saved the JSON
 
 export const ProjectPage = () => {
   const [applyingFor, setApplyingFor] = useState(null);
@@ -6,7 +7,7 @@ export const ProjectPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   
-  // Track standard fields
+  // Track standard fields (Changed usState to stateRegion to support all countries)
   const [formData, setFormData] = useState({
     resume: null,
     fullName: "",
@@ -16,7 +17,7 @@ export const ProjectPage = () => {
     company: "",
     birthCountry: "",
     currentCountry: "",
-    usState: "",
+    stateRegion: "", 
     primaryLanguage: "",
     additionalLanguage: "",
     educationLevel: "",
@@ -113,6 +114,7 @@ export const ProjectPage = () => {
       description: 'Capture, transcribe, and evaluate live inter-linguistic player interactions in multiplayer online environments to train AI moderation and translation.', 
       rate: 'Contract',
       details: projectOneDetails,
+      // Added new gaming questions here
       questions: [
         "1. What is your native language, and what other languages are you fluent in? (Indicate proficiency)",
         "2. Describe your gaming experience (Genres, specific titles played in the last 6 months).",
@@ -122,7 +124,9 @@ export const ProjectPage = () => {
         "6. Detail previous audio transcription/annotation experience and tools used.",
         "7. How do you evaluate the success of an interaction using mixed languages and in-game pings?",
         "8. List hardware specs (CPU, GPU, Headset) and attach a speed test (describe speeds here).",
-        "9. Are you available to monitor live sessions during peak gaming hours?"
+        "9. Are you available to monitor live sessions during peak gaming hours?",
+        "10. What type of gaming console(s) do you currently use?",
+        "11. What is your favorite game right now?"
       ]
     },
     { 
@@ -131,12 +135,14 @@ export const ProjectPage = () => {
       description: 'Develop a framework between Unity/Unreal and the end-user to evaluate latency, replicate live states, and dynamically optimize VR asset delivery.',
       rate: 'Contract',
       details: projectTwoDetails,
+      // Added VR brand question here
       questions: [
         "1. How do you approach low-level telemetry extraction from VR headsets without increasing latency?",
         "2. Describe a method for replicating a live networked physics state into a debugging shadow sim.",
         "3. What metrics would you use to evaluate Experience Quality beyond FPS?",
         "4. How would you implement dynamic alternate asset delivery based on GPU thermal throttling?",
-        "5. How do you summarize high-frequency 6DOF spatial data for non-technical stakeholders?"
+        "5. How do you summarize high-frequency 6DOF spatial data for non-technical stakeholders?",
+        "6. What brand of VR headset(s) do you currently use for development or personal use?"
       ]
     },
     { 
@@ -157,10 +163,20 @@ export const ProjectPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
-    }));
+    
+    setFormData(prev => {
+      const updatedData = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : type === 'file' ? files[0] : value
+      };
+      
+      // Reset stateRegion if they switch countries to avoid mismatch
+      if (name === 'currentCountry') {
+        updatedData.stateRegion = "";
+      }
+      
+      return updatedData;
+    });
   };
 
   const handleQuestionChange = (index, value) => {
@@ -171,7 +187,6 @@ export const ProjectPage = () => {
   };
 
   const isFormValid = () => {
-    // Basic personal info validation
     const basicValid = formData.fullName.trim() !== "" &&
                        formData.email.trim() !== "" &&
                        formData.birthCountry !== "" &&
@@ -179,12 +194,15 @@ export const ProjectPage = () => {
                        formData.primaryLanguage !== "" &&
                        formData.educationLevel !== "";
     
-    // Ensure all project-specific questions have some input
+    // Check if current country has states, if so, ensure stateRegion is filled
+    const needsState = formData.currentCountry && locationData[formData.currentCountry]?.states.length > 0;
+    const stateValid = needsState ? formData.stateRegion !== "" : true;
+    
     const questionsValid = applyingFor?.questions.every((_, i) => 
       questionAnswers[i] && questionAnswers[i].trim() !== ""
     );
 
-    return basicValid && questionsValid;
+    return basicValid && stateValid && questionsValid;
   };
 
   const handleApply = async (e) => {
@@ -194,22 +212,18 @@ export const ProjectPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Construct FormData for proper file handling and nested data
       const payload = new FormData();
       payload.append('projectId', applyingFor.id);
       payload.append('projectTitle', applyingFor.title);
       
-      // Append standard fields
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null) {
           payload.append(key, formData[key]);
         }
       });
       
-      // Append formatted answers
       payload.append('qualificationAnswers', JSON.stringify(questionAnswers));
 
-      // API Call mapping
       const response = await fetch('https://the-king-backend.onrender.com/api/profile/projectsubmission', {
         method: 'POST',
         body: payload
@@ -220,7 +234,6 @@ export const ProjectPage = () => {
         closeOverlay();
         setShowSuccessPopup(true);
       } else {
-        // Fallback for demo purposes if endpoint doesn't actually exist
         console.warn("API route not found, simulating success state.");
         setAppliedProjects([...appliedProjects, applyingFor.id]);
         closeOverlay();
@@ -238,14 +251,18 @@ export const ProjectPage = () => {
     setQuestionAnswers({});
     setFormData({
       resume: null, fullName: "", email: "", phone: "", location: "", company: "",
-      birthCountry: "", currentCountry: "", usState: "", primaryLanguage: "",
+      birthCountry: "", currentCountry: "", stateRegion: "", primaryLanguage: "",
       additionalLanguage: "", educationLevel: "", consent: false
     });
   };
 
-  // Styled specifically with cool slate and subtle blue undertones
   const inputClasses = "w-full bg-slate-800/50 border border-slate-700/60 rounded-lg p-2.5 text-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all mb-4";
   const labelClasses = "text-xs text-slate-400 uppercase font-bold block mb-1.5 tracking-wider";
+
+  // Check if we need to show the state dropdown based on selected current country
+  const availableStates = formData.currentCountry && locationData[formData.currentCountry] 
+    ? locationData[formData.currentCountry].states 
+    : [];
 
   return (
     <div className="space-y-6 min-h-screen bg-slate-950 p-6 font-sans">
@@ -322,22 +339,18 @@ export const ProjectPage = () => {
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 lg:p-8 bg-slate-950/80 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl flex flex-col w-full max-w-5xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[95vh] overflow-hidden">
             
-            {/* Header */}
             <div className="p-6 border-b border-slate-800 shrink-0 bg-slate-900/50">
               <h2 className="text-2xl font-bold text-slate-100 mb-1">{applyingFor.title}</h2>
               <p className="text-slate-400 text-sm">Please review the requirements before submitting your tailored application.</p>
             </div>
             
-            {/* Scrollable Body - 2 Columns on Desktop */}
             <div className="flex-grow overflow-hidden flex flex-col lg:flex-row">
               
-              {/* Left Column: Project Details */}
               <div className="lg:w-1/2 p-6 overflow-y-auto custom-scrollbar border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/30">
                 <h3 className="text-blue-400 font-bold mb-4 text-xs tracking-widest uppercase bg-blue-500/10 inline-block px-3 py-1 rounded-full">Full Project Details</h3>
                 {applyingFor.details}
               </div>
 
-              {/* Right Column: Application Form */}
               <div className="lg:w-1/2 p-6 overflow-y-auto custom-scrollbar">
                 
                 <h3 className="text-slate-200 font-semibold mb-4 text-sm tracking-wide uppercase">Personal Information</h3>
@@ -371,37 +384,41 @@ export const ProjectPage = () => {
                 <h3 className="text-slate-200 font-semibold mt-4 mb-4 text-sm tracking-wide uppercase border-t border-slate-800 pt-6">Demographics & Skills</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  
+                  {/* Dynamic Country Dropdowns mapping from JSON */}
                   <div>
                     <label className={labelClasses}>Birth Country <span className="text-red-400">*</span></label>
                     <select name="birthCountry" value={formData.birthCountry} onChange={handleInputChange} className={inputClasses}>
                       <option value="">Select...</option>
-                      <option value="US">United States</option>
-                      <option value="UK">United Kingdom</option>
-                      <option value="CA">Canada</option>
-                      <option value="IN">India</option>
-                      <option value="NG">Nigeria</option>
+                      {Object.entries(locationData).map(([code, data]) => (
+                        <option key={`birth-${code}`} value={code}>{data.name}</option>
+                      ))}
                     </select>
                   </div>
+                  
                   <div>
                     <label className={labelClasses}>Current Country <span className="text-red-400">*</span></label>
                     <select name="currentCountry" value={formData.currentCountry} onChange={handleInputChange} className={inputClasses}>
                       <option value="">Select...</option>
-                      <option value="US">United States</option>
-                      <option value="UK">United Kingdom</option>
-                      <option value="CA">Canada</option>
-                      <option value="IN">India</option>
-                      <option value="NG">Nigeria</option>
+                      {Object.entries(locationData).map(([code, data]) => (
+                        <option key={`curr-${code}`} value={code}>{data.name}</option>
+                      ))}
                     </select>
                   </div>
-                  <div>
-                    <label className={labelClasses}>US State (If applicable)</label>
-                    <select name="usState" value={formData.usState} onChange={handleInputChange} className={inputClasses}>
-                      <option value="">Select...</option>
-                      <option value="CA">California</option>
-                      <option value="NY">New York</option>
-                      <option value="TX">Texas</option>
-                    </select>
-                  </div>
+
+                  {/* Dynamic State Dropdown based on Current Country */}
+                  {availableStates.length > 0 && (
+                    <div>
+                      <label className={labelClasses}>State / Province <span className="text-red-400">*</span></label>
+                      <select name="stateRegion" value={formData.stateRegion} onChange={handleInputChange} className={inputClasses}>
+                        <option value="">Select State...</option>
+                        {availableStates.map((state) => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className={labelClasses}>Education Level <span className="text-red-400">*</span></label>
                     <select name="educationLevel" value={formData.educationLevel} onChange={handleInputChange} className={inputClasses}>
@@ -467,7 +484,6 @@ export const ProjectPage = () => {
               </div>
             </div>
 
-            {/* Footer / Actions */}
             <div className="p-6 border-t border-slate-800 bg-slate-900/50 flex gap-3 shrink-0 justify-end">
               <button 
                 onClick={closeOverlay}

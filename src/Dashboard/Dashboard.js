@@ -19,7 +19,7 @@ const LockedScreen = () => (
     </div>
     <h2 className="text-3xl font-bold text-white mb-3">Access Restricted</h2>
     <p className="text-gray-400 max-w-md mx-auto">
-      Please submit your profile and complete your W-9 Tax Compliance form to unlock this page.
+      Please submit your profile, complete your W-9 Tax Compliance form and choose a payment method to unlock this page.
     </p>
   </div>
 );
