@@ -175,7 +175,7 @@ const handleUpload = async () => {
         </div>
 
         {/* Info & History Section */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* <div className="lg:col-span-2 space-y-6">
           <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
             <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 opacity-70">Tax Identity</h3>
             <div className="space-y-3">
@@ -195,7 +195,7 @@ const handleUpload = async () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

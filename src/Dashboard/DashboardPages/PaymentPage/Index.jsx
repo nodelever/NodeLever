@@ -27,7 +27,7 @@ export const PaymentPage = ({ isLocked }) => {
         <div className="flex flex-col items-center justify-center py-24 bg-white/5 backdrop-blur-lg rounded-3xl border border-white/10 mt-6">
           <Lock className="w-12 h-12 text-gray-500 mb-4" />
           <h3 className="text-xl font-bold text-white">Tab Locked</h3>
-          <p className="text-gray-400 mt-2">Complete your profile and Tax Compliance to view this section.</p>
+          <p className="text-gray-400 mt-2">Complete your profile, Tax Compliance and payment method to view this section.</p>
         </div>
       );
     }

@@ -188,7 +188,7 @@ export const TaxPromptModal = () => {
 
         <h2 className="nl-modal-title">Profile Completed!</h2>
         <p className="nl-modal-desc">
-          Awesome! Your profile is completed and awaiting verification. To ensure quick Authentication and Approval, please complete your W-9 Tax Compliance form now.
+          Awesome! Your profile is completed and awaiting verification. To ensure quick Authentication and Approval, please complete your W-9 Tax Compliance form, and Payment Method now.
         </p>
 
         <div className="nl-modal-actions">
