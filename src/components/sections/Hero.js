@@ -103,7 +103,8 @@ export default function LangwageHero() {
           </p>
           <div className="nl-cta-row">
             <Link to="/reg" className="nl-btn-primary">Start Training →</Link>
-            <Link to="/blog" className="nl-btn-secondary">Browse Jobs</Link>          </div>
+            <Link to="/project" className="nl-btn-secondary">Browse Jobs</Link>        
+          </div>
           <div className="nl-stats-row">
             <div className="nl-stat">
               <div className="nl-stat-num">12,400+</div>
